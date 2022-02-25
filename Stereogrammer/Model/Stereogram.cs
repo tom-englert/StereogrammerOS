@@ -2,54 +2,30 @@
 // All rights reserved
 // http://machinewrapped.wordpress.com/stereogrammer/
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Threading.Tasks;
+using Engine;
 
-namespace Stereogrammer.Model
+namespace Stereogrammer.Model;
+
+/// <summary>
+/// Stereogram image.  A BitmapType which also stores the options it was generated from.
+/// </summary>
+public class Stereogram : BitmapType
 {
-    using Algorithm = StereogramAlgorithm.Algorithm;
-
-    /// <summary>
-    /// Specialised BitmapCollection (basically provides a custom factory func)
-    /// </summary>
-    public class StereogramCollection : BitmapCollection
+    public Stereogram(BitmapSource bitmap)
     {
-        public StereogramCollection()
-            : base( new Func<BitmapSource, BitmapType>( bmp => new Stereogram( bmp ) ) )
-        {
-        }
+        Bitmap = bitmap;
     }
 
+    public bool HasOptions => Options != null;
+
     /// <summary>
-    /// Stereogram image.  A BitmapType which also stores the options it was generated from.
+    /// Options used to generate the stereogram
     /// </summary>
-    public class Stereogram : BitmapType
-    {
-        public Stereogram( BitmapSource bitmap )
-        {
-            Bitmap = bitmap;
-        }
+    public Options Options { get; set; }
 
-        public bool HasOptions { get { return options != null; } }
-
-        public DateTime GenerationTime { get { return options != null ? options.time : System.DateTime.Now; } }
-
-        /// <summary>
-        /// Options used to generate the stereogram
-        /// </summary>
-        public Options options = null;
-
-        /// <summary>
-        /// Time taken to generate stereogram, in milliseconds
-        /// </summary>
-        public long Milliseconds = 0;
-    }
-
-
+    /// <summary>
+    /// Time taken to generate stereogram, in milliseconds
+    /// </summary>
+    public long Milliseconds = 0;
 }

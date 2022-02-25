@@ -24,22 +24,22 @@ namespace Stereogrammer
     /// </summary>
     public partial class FullscreenView : Window
     {
-        object theItem;
+        private readonly object _theItem;
 
         public delegate void CloseDelegate();
 
-        CloseDelegate OnClose;
+        private readonly CloseDelegate _onClose;
 
-        public FullscreenView( object item, CloseDelegate OnClose )
+        public FullscreenView( object item, CloseDelegate onClose )
         {
             InitializeComponent();
 
-            theItem = item;
+            _theItem = item;
 
-            this.CommandBindings.Add( new CommandBinding( Commands.CmdFullscreenClose, CmdFullscreenCloseExecuted, CmdFullscreenCloseCanExecute ) );
+            CommandBindings.Add( new CommandBinding( Commands.CmdFullscreenClose, CmdFullscreenCloseExecuted, CmdFullscreenCloseCanExecute ) );
 
             // Close with double-click
-            MouseBinding doubleclick = new MouseBinding( Commands.CmdFullscreenClose, new MouseGesture( MouseAction.LeftDoubleClick ) );
+            var doubleclick = new MouseBinding( Commands.CmdFullscreenClose, new MouseGesture( MouseAction.LeftDoubleClick ) );
             doubleclick.CommandTarget = this;
             InputBindings.Add( doubleclick );
             previewFullScreen.InputBindings.Add( doubleclick );
@@ -49,7 +49,7 @@ namespace Stereogrammer
             InputBindings.Add( new KeyBinding( Commands.CmdFullscreenClose, new KeyGesture( Key.Escape ) ) );
 
             // Handler for closing
-            this.OnClose = OnClose;
+            _onClose = onClose;
         }
 
         public void CmdFullscreenCloseExecuted( object sender, ExecutedRoutedEventArgs e )
@@ -70,14 +70,14 @@ namespace Stereogrammer
 
         private void Fullscreen_Loaded( object sender, RoutedEventArgs e )
         {
-            previewFullScreen.SetPreviewItem( theItem );
+            previewFullScreen.SetPreviewItem( _theItem );
         }
 
         private void Fullscreen_Closing( object sender, System.ComponentModel.CancelEventArgs e )
         {
-            if ( OnClose != null )
+            if ( _onClose != null )
             {
-                OnClose();
+                _onClose();
             }
         }
     }

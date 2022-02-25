@@ -36,19 +36,19 @@ namespace Stereogrammer
 
         public List<Button> Buttons { get; set; }
 
-        public Thumbnail SelectedThumbnail { get { return Palette.GetSelectedThumbnail(); } }
-        public List<Thumbnail> MultiselectedThumbnails { get { return Palette.GetMultiselectedThumbnails(); } }
+        public Thumbnail SelectedThumbnail => Palette.GetSelectedThumbnail();
+        public List<Thumbnail> MultiselectedThumbnails => Palette.GetMultiselectedThumbnails();
 
         public RoutedCommand DefaultDoubleClick
         {
-            get { return (RoutedCommand)GetValue( DefaultDoubleClickProperty ); }
+            get => (RoutedCommand)GetValue( DefaultDoubleClickProperty );
             set { SetValue( DefaultDoubleClickProperty, value ); Palette.DefaultDoubleClick = value; }
         }
 
         public Palette Palette
         {
-            get { return (Palette)GetValue( PaletteProperty ); }
-            set { SetValue( PaletteProperty, value ); }
+            get => (Palette)GetValue( PaletteProperty );
+            set => SetValue( PaletteProperty, value );
         }
 
         public PaletteView()
@@ -56,10 +56,10 @@ namespace Stereogrammer
             InitializeComponent();
             Buttons = new List<Button>();
             ButtonsPanel.ItemsSource = Buttons;
-            this.CommandBindings.Add( new CommandBinding( Commands.CmdClearPalette, CmdClearPaletteExecuted, CmdClearPaletteCanExecute ) );
-            this.CommandBindings.Add( new CommandBinding( Commands.CmdDeleteSelectedItems, CmdDeleteSelectedItemsExecuted, CmdDeleteSelectedItemsCanExecute ) );
-            this.CommandBindings.Add( new CommandBinding( Commands.CmdSelectAndAddFiles, CmdSelectAndAddFilesExecuted, CmdSelectAndAddFilesCanExecute ) );
-            this.CommandBindings.Add( new CommandBinding( Commands.CmdSelectItem, CmdSelectItemExecuted, CmdSelectItemCanExecute ) );
+            CommandBindings.Add( new CommandBinding( Commands.CmdClearPalette, CmdClearPaletteExecuted, CmdClearPaletteCanExecute ) );
+            CommandBindings.Add( new CommandBinding( Commands.CmdDeleteSelectedItems, CmdDeleteSelectedItemsExecuted, CmdDeleteSelectedItemsCanExecute ) );
+            CommandBindings.Add( new CommandBinding( Commands.CmdSelectAndAddFiles, CmdSelectAndAddFilesExecuted, CmdSelectAndAddFilesCanExecute ) );
+            CommandBindings.Add( new CommandBinding( Commands.CmdSelectItem, CmdSelectItemExecuted, CmdSelectItemCanExecute ) );
         }
 
         /// <summary>
@@ -110,20 +110,20 @@ namespace Stereogrammer
         // Command to add files with a directory selector
         public void CmdSelectAndAddFilesExecuted( object sender, ExecutedRoutedEventArgs e )
         {
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            var dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = "Image"; // Default file name
             dlg.DefaultExt = ".jpg"; // Default file extension
             dlg.Filter = "Image Files|*.jpg;*.bmp;*.gif;*.png"; // Filter files by extension
             dlg.Multiselect = true;
-            dlg.InitialDirectory = Palette.sDefaultDirectory;
+            dlg.InitialDirectory = Palette.SDefaultDirectory;
             dlg.InitialDirectory.Replace( @"\\", @"\" );
             dlg.RestoreDirectory = false;
 
-            Nullable<bool> result = dlg.ShowDialog();
+            var result = dlg.ShowDialog();
 
             if ( result == true )
             {
-                Palette.sDefaultDirectory = new System.IO.FileInfo( dlg.FileName ).DirectoryName;
+                Palette.SDefaultDirectory = new System.IO.FileInfo( dlg.FileName ).DirectoryName;
                 Palette.Bitmaps.Populate( dlg.FileNames.ToArray() );
             }
         }
@@ -148,7 +148,7 @@ namespace Stereogrammer
         /// <param name="e"></param>
         public void CmdSelectItemExecuted( object sender, ExecutedRoutedEventArgs e )
         {
-            Thumbnail thumb = (Thumbnail)e.Parameter;
+            var thumb = (Thumbnail)e.Parameter;
             Palette.SelectionLogic( thumb, Keyboard.Modifiers.HasFlag( ModifierKeys.Shift ), Keyboard.Modifiers.HasFlag( ModifierKeys.Control ) );
         }
 
@@ -177,7 +177,7 @@ namespace Stereogrammer
         private void event_ThumbnailSelected( Palette palette, Thumbnail thumb )
         {
             // Disgusting, and doesn't work with a virtualising stack panel because there's no UI element generated if it's not visible!
-            FrameworkElement element = Thumbnails.ItemContainerGenerator.ContainerFromItem( thumb ) as FrameworkElement;
+            var element = Thumbnails.ItemContainerGenerator.ContainerFromItem( thumb ) as FrameworkElement;
 
             if ( element != null )
             {
@@ -192,7 +192,7 @@ namespace Stereogrammer
         /// <param name="e"></param>
         private void Image_ImageFailed( object sender, ExceptionRoutedEventArgs e )
         {
-            Image image = (Image)e.Source;      // or sender?
+            var image = (Image)e.Source;      // or sender?
             e.Handled = true;
         }
     }

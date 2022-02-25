@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
-
+using Engine;
 using Stereogrammer.Model;
 
 
@@ -22,11 +22,15 @@ namespace Stereogrammer.ViewModel
     public class Thumbnail : DependencyObject
     {
         public static readonly DependencyProperty BorderBrushProperty =
-              DependencyProperty.Register( "BorderBrush", typeof( Brush ), typeof( Thumbnail ) );
+              DependencyProperty.Register("BorderBrush", typeof(Brush), typeof(Thumbnail));
 
         public BitmapType ThumbnailOf { get; private set; }
 
-        public bool CanRemove { get { return ThumbnailOf.bCanRemove; } set { ThumbnailOf.bCanRemove = value; } }
+        public bool CanRemove
+        {
+            get => ThumbnailOf.CanRemove;
+            set => ThumbnailOf.CanRemove = value;
+        }
 
         public RoutedCommand OnDoubleClick { get; set; }
 
@@ -35,12 +39,12 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         public bool Selected
         {
-            get { return bSelected; }
+            get => _bSelected;
             set
             {
-                bSelected = value;
+                _bSelected = value;
                 SetBorderBrush();
-                Source = ThumbnailOf.GetThumbnail( bSelected );
+                Source = ThumbnailOf.GetThumbnail(_bSelected);
             }
         }
 
@@ -49,28 +53,19 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         public bool MultiSelected
         {
-            get { return bMultiselected; }
+            get => _bMultiselected;
             set
             {
-                bMultiselected = value;
+                _bMultiselected = value;
                 SetBorderBrush();
             }
         }
 
-        public string Name
-        {
-            get { return ThumbnailOf.Name; }
-        }
+        public string Name => ThumbnailOf.Name;
 
-        public string Filename
-        {
-            get { return ThumbnailOf.filename; }
-        }
+        public string FileName => ThumbnailOf.FileName;
 
-        public string Description
-        {
-            get { return String.Format( "{0} ({1}x{2})", Name, ThumbnailOf.PixelWidth, ThumbnailOf.PixelHeight ); }
-        }
+        public string Description => string.Format("{0} ({1}x{2})", Name, ThumbnailOf.PixelWidth, ThumbnailOf.PixelHeight);
 
         public override string ToString()
         {
@@ -81,21 +76,21 @@ namespace Stereogrammer.ViewModel
 
         public Brush BorderBrush
         {
-            get { return (Brush)GetValue( BorderBrushProperty ); }
-            set { SetValue( BorderBrushProperty, value ); }
+            get => (Brush)GetValue(BorderBrushProperty);
+            set => SetValue(BorderBrushProperty, value);
         }
 
-        private bool bSelected = false;
-        private bool bMultiselected = false;
+        private bool _bSelected = false;
+        private bool _bMultiselected = false;
 
-        public Thumbnail( BitmapType represents )
+        public Thumbnail(BitmapType represents)
             : base()
         {
             ThumbnailOf = represents;
 
-            Source = ThumbnailOf.GetThumbnail( false );
+            Source = ThumbnailOf.GetThumbnail(false);
 
-//            ContextMenu = GetContextMenu();
+            //            ContextMenu = GetContextMenu();
         }
 
         /// <summary>
@@ -103,22 +98,23 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         private void SetBorderBrush()
         {
-            if ( bSelected )
-                BorderBrush = new SolidColorBrush( Colors.Green );
-            else if ( bMultiselected )
-                BorderBrush = new SolidColorBrush( Colors.Blue );
+            if (_bSelected)
+                BorderBrush = new SolidColorBrush(Colors.Green);
+            else if (_bMultiselected)
+                BorderBrush = new SolidColorBrush(Colors.Blue);
             else
-                BorderBrush = new SolidColorBrush( Colors.White );
+                BorderBrush = new SolidColorBrush(Colors.White);
         }
 
         private List<CommandView> _commands;
-        public List<CommandView> SupportedCommands {
+        public List<CommandView> SupportedCommands
+        {
             get
             {
-                if ( _commands == null )
+                if (_commands == null)
                 {
-                    _commands = Commands.GetSupportedCommands( ThumbnailOf );
-                    _commands.Add( Commands.CmdDeleteSelectedItems );
+                    _commands = Commands.GetSupportedCommands(ThumbnailOf);
+                    _commands.Add(Commands.CmdDeleteSelectedItems);
                 }
                 return _commands;
             }

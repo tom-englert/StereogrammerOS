@@ -16,7 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
-
+using Engine;
 using Stereogrammer.ViewModel;
 using Stereogrammer.Model;      // TEMP?
 
@@ -27,8 +27,8 @@ namespace Stereogrammer
     /// </summary>
     public partial class PreviewPane : UserControl
     {
-        new public double ActualWidth { get { return gridPreview.ActualWidth; } }
-        new public double ActualHeight { get { return gridPreview.ActualHeight; } }
+        new public double ActualWidth => gridPreview.ActualWidth;
+        new public double ActualHeight => gridPreview.ActualHeight;
 
         public PreviewPane()
         {
@@ -44,7 +44,7 @@ namespace Stereogrammer
             if ( item is Thumbnail )
             {
                 // Set the underlying object's preview then add a context menu
-                Thumbnail thumb = (Thumbnail)item;
+                var thumb = (Thumbnail)item;
                 SetPreviewItem( thumb.ThumbnailOf );
             }
             else if ( item is BitmapType )
@@ -54,12 +54,12 @@ namespace Stereogrammer
 
                 InputBindings.Clear();
 
-                MouseBinding doubleclick = new MouseBinding( Commands.CmdFullscreen, new MouseGesture( MouseAction.LeftDoubleClick ) );
+                var doubleclick = new MouseBinding( Commands.CmdFullscreen, new MouseGesture( MouseAction.LeftDoubleClick ) );
                 doubleclick.CommandTarget = this;
                 doubleclick.CommandParameter = preview;
                 InputBindings.Add( doubleclick );
 
-                List<MenuItem> menuitems = GetMenuItems( item, item );
+                var menuitems = GetMenuItems( item, item );
                 ContextMenu = new ContextMenu() { ItemsSource = menuitems };
             }
             else
@@ -78,12 +78,12 @@ namespace Stereogrammer
         /// <returns></returns>
         public List<MenuItem> GetMenuItems( object item, object parameter )
         {
-            List<CommandView> commands = Commands.GetSupportedCommands( item );
+            var commands = Commands.GetSupportedCommands( item );
 
             if (commands != null)
 	        {
-                List<MenuItem> items = new List<MenuItem>();
-                foreach ( CommandView cmd in commands )
+                var items = new List<MenuItem>();
+                foreach ( var cmd in commands )
                 {
                     items.Add( new MenuItem() { Header = cmd.LongName, Command = cmd.Command, CommandParameter = parameter } );
                 }

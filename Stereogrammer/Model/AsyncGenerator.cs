@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using System.Threading;
+using Engine;
 
 namespace Stereogrammer.Model
 {
@@ -18,10 +19,10 @@ namespace Stereogrammer.Model
     /// </summary>
     public class StereogramGeneratorAsync : IDisposable
     {
-        BackgroundWorker worker;
-        StereogramGenerator generator = null;
-        Options requestOptions;
-        Action<Stereogram> callback;
+        private readonly BackgroundWorker _worker;
+        private StereogramGenerator _generator = null;
+        private Options _requestOptions;
+        private readonly Action<Stereogram> _callback;
 
         /// <summary>
         /// Generate a stereogram in a background thread, invoke a callback when it's completed
@@ -29,19 +30,19 @@ namespace Stereogrammer.Model
         /// <param name="callback"></param>
         public StereogramGeneratorAsync( Action<Stereogram> callback )
         {
-            worker = new BackgroundWorker();
+            _worker = new BackgroundWorker();
 
-            worker.DoWork += new DoWorkEventHandler( generate_DoWork );
-            worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler( generate_Completed );
+            _worker.DoWork += new DoWorkEventHandler( generate_DoWork );
+            _worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler( generate_Completed );
 
-            this.callback = callback;
+            _callback = callback;
         }
 
         public void Dispose()
         {
-            if ( worker.IsBusy )
+            if ( _worker.IsBusy )
             {
-                worker.CancelAsync();
+                _worker.CancelAsync();
             }
         }
 
@@ -53,29 +54,29 @@ namespace Stereogrammer.Model
         /// <param name="millisecondDelay"></param>
         public void RequestStereogram( Options options, long millisecondDelay = 0 )
         {
-            requestOptions = new Options( options );
+            _requestOptions = new Options( options );
 
             if ( millisecondDelay != 0 )
             {
-                requestOptions.time = requestOptions.time.AddMilliseconds( millisecondDelay );
+                _requestOptions.time = _requestOptions.time.AddMilliseconds( millisecondDelay );
             }
 
             // Freeze the input bitmaps so they can be accessed across threads
             // (might be better to make a copy of them and freeze the copy?)
-            requestOptions.depthmap.Bitmap.Freeze();
-            requestOptions.texture.Bitmap.Freeze();
+            _requestOptions.DepthMap.Bitmap.Freeze();
+            _requestOptions.Texture.Bitmap.Freeze();
 
-            if ( worker.IsBusy == false )
+            if ( _worker.IsBusy == false )
             {
-                worker.RunWorkerAsync( requestOptions );
+                _worker.RunWorkerAsync( _requestOptions );
             }
         }
 
         public double GetProgress()
         {
-            if ( generator != null )
+            if ( _generator != null )
             {
-                return ( (double)generator.GeneratedLines * 100 ) / generator.NumLines;
+                return ( (double)_generator.GeneratedLines * 100 ) / _generator.NumLines;
             }
             return 0.0;
         }
@@ -87,17 +88,17 @@ namespace Stereogrammer.Model
         /// <param name="e"></param>
         private void generate_DoWork( object sender, DoWorkEventArgs e )
         {
-            BackgroundWorker worker = sender as BackgroundWorker;
+            var worker = sender as BackgroundWorker;
 
             // Keep generating as long as there's a request in the pipe
-            while ( requestOptions != null )
+            while ( _requestOptions != null )
             {
-                Options options = requestOptions;
-                requestOptions = null;
+                Options options = _requestOptions;
+                _requestOptions = null;
 
                 if ( options.time.Ticks > DateTime.Now.Ticks )
                 {
-                    TimeSpan delta = new TimeSpan( options.time.Ticks - DateTime.Now.Ticks );
+                    var delta = new TimeSpan( options.time.Ticks - DateTime.Now.Ticks );
                     if ( delta.TotalMilliseconds > 50 )
                     {
                         Thread.Sleep( delta );
@@ -110,15 +111,20 @@ namespace Stereogrammer.Model
                     return;
                 }
 
-                if ( options != null && requestOptions == null )
+                if ( options != null && _requestOptions == null )
                 {
-                    ThreadPriority old = Thread.CurrentThread.Priority;
+                    var old = Thread.CurrentThread.Priority;
                     try
                     {
                         Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-                        generator = StereogramGenerator.Get( options );
-                        Stereogram stereogram = generator.Generate();
-                        stereogram.Name = String.Format( "{0} + {1}", options.depthmap.Name, options.texture.Name );
+                        _generator = StereogramGenerator.Get( options );
+                        var stereogramBitmap = _generator.Generate();
+                        
+                        var stereogram = new Stereogram(stereogramBitmap);
+
+                        stereogram.Options = options;
+                        stereogram.Name = string.Format( "{0} + {1}", options.DepthMap.Name, options.Texture.Name );
+
                         e.Result = stereogram;
                     }
                     finally
@@ -137,9 +143,9 @@ namespace Stereogrammer.Model
             if ( e.Error != null )
             {
                 // Let the callback handle a NULL result
-                if ( callback != null )
+                if ( _callback != null )
                 {
-                    callback( null );
+                    _callback( null );
                 }
             }
             else if ( e.Cancelled )
@@ -149,9 +155,9 @@ namespace Stereogrammer.Model
             {
                 Stereogram stereogram = (Stereogram)e.Result;
 
-                if ( callback != null )
+                if ( _callback != null )
                 {
-                    callback( stereogram );
+                    _callback( stereogram );
                 }
             }
         }

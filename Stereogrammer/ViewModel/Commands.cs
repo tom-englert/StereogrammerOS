@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
-
+using Engine;
 using Stereogrammer.Model;
 
 namespace Stereogrammer.ViewModel
@@ -16,7 +16,7 @@ namespace Stereogrammer.ViewModel
     public class CommandView : RoutedCommand
     {
         public string LongName { get; private set; }
-        public RoutedCommand Command { get { return this; } }
+        public RoutedCommand Command => this;
 
         public CommandView( string name )
         {
@@ -61,17 +61,17 @@ namespace Stereogrammer.ViewModel
             if ( type is Stereogram )
             {
                 supported = new List<CommandView>() 
-                    { Commands.CmdSaveStereogram, Commands.CmdRegenerateStereogram, Commands.CmdPreviewStereogram, Commands.CmdRestoreStereogramSettings, Commands.CmdFullscreen };
+                    { CmdSaveStereogram, CmdRegenerateStereogram, CmdPreviewStereogram, CmdRestoreStereogramSettings, CmdFullscreen };
             }
-            else if ( type is Depthmap )
+            else if ( type is DepthMap )
             {
                 supported = new List<CommandView>()
-                    { Commands.CmdPreviewStereogram, Commands.CmdGenerateStereogram, Commands.CmdFullscreen, Commands.CmdInvertDepthmap, 
-                        Commands.CmdAdjustDepthmapLevels, Commands.CmdMergeDepthmaps, Commands.CmdSaveDepthmap };
+                    { CmdPreviewStereogram, CmdGenerateStereogram, CmdFullscreen, CmdInvertDepthmap, 
+                        CmdAdjustDepthmapLevels, CmdMergeDepthmaps, CmdSaveDepthmap };
             }
             else if ( type is Texture )
             {
-                supported = new List<CommandView>() { Commands.CmdPreviewStereogram, Commands.CmdGenerateStereogram, Commands.CmdFullscreen };
+                supported = new List<CommandView>() { CmdPreviewStereogram, CmdGenerateStereogram, CmdFullscreen };
             }
 
             return supported;

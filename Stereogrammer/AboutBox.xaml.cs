@@ -30,11 +30,11 @@ namespace Stereogrammer
         {
             InitializeComponent();
 
-            version.Content = String.Format("Version {0}", GetRunningVersion());
-            this.about.Text = String.Join(Environment.NewLine, about);
+            version.Content = string.Format("Version {0}", GetRunningVersion());
+            this.about.Text = string.Join(Environment.NewLine, about);
 
             // Embed some hyperlinks
-            Hyperlink[] links = new Hyperlink[] {
+            var links = new Hyperlink[] {
                 new Hyperlink( new Run( "Homepage" ) ) { NavigateUri = new Uri( @"http://machinewrapped.wordpress.com/stereogrammer/" ) },
                 new Hyperlink( new Run( "Get More Textures @ InfiniteFish" ) ) { NavigateUri = new Uri( @"http://infinitefish.com/textures/" ) },
                 new Hyperlink( new Run( "Stereograms @ Techmind" ) ) { NavigateUri = new Uri( @"http://www.techmind.org/stereo/stereo.html" ) }
@@ -48,7 +48,7 @@ namespace Stereogrammer
                    e.Handled = true;
                });
 
-                stackPanel1.Children.Add(new Label() { HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center, Content = link });
+                stackPanel1.Children.Add(new Label() { HorizontalContentAlignment = HorizontalAlignment.Center, Content = link });
             }
         }
 

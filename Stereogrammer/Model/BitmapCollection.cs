@@ -4,189 +4,198 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Media.Imaging;
 using System.IO;
+using Engine;
 
-namespace Stereogrammer.Model
+namespace Stereogrammer.Model;
+
+/// <summary>
+/// A collection of Bitmap Types.
+/// Doesn't actually add much to the model layer, and could (maybe should) be rolled into Palette at the ViewModel layer for simplification.
+/// </summary>
+public class BitmapCollection
 {
-    /// <summary>
-    /// A collection of Bitmap Types.
-    /// Doesn't actually add much to the model layer, and could (maybe should) be rolled into Palette at the ViewModel layer for simplification.
-    /// </summary>
-    public class BitmapCollection
+    private Func<BitmapImage, BitmapType> FactoryFunc { get; set; }
+
+    private readonly List<BitmapType> _myItems = new List<BitmapType>();
+
+    public delegate void ItemCallback( BitmapCollection collection, BitmapType item );
+
+    public event ItemCallback OnItemAdded;
+    public event ItemCallback OnItemRemoved;
+
+    public BitmapCollection( Func<BitmapImage, BitmapType> factoryFunc )
     {
-        Func<BitmapImage, BitmapType> FactoryFunc { get; set; }
+        FactoryFunc = factoryFunc;
+    }
 
-        List<BitmapType> myItems = new List<BitmapType>();
-
-        public delegate void ItemCallback( BitmapCollection collection, BitmapType item );
-
-        public event ItemCallback OnItemAdded;
-        public event ItemCallback OnItemRemoved;
-
-        public BitmapCollection( Func<BitmapImage, BitmapType> factoryFunc )
+    /// <summary>
+    /// Add a BitmapType object to the collection
+    /// </summary>
+    /// <param name="item"></param>
+    public void AddItem( BitmapType item, bool bCanRemove = true )
+    {
+        item.CanRemove = bCanRemove;
+        _myItems.Add( item );
+        if ( null != OnItemAdded )
         {
-            this.FactoryFunc = factoryFunc;
+            OnItemAdded( this, item );
         }
+    }
 
-        /// <summary>
-        /// Add a BitmapType object to the collection
-        /// </summary>
-        /// <param name="item"></param>
-        public void AddItem( BitmapType item, bool bCanRemove = true )
+    /// <summary>
+    /// Create a BitmapType object from a BitmapImage using the factory function, and add it to the collection
+    /// </summary>
+    /// <param name="item"></param>
+    public BitmapType AddNewItem( BitmapImage bitmap )
+    {
+        var item = FactoryFunc( bitmap );
+        AddItem( item );
+        return item;
+    }
+
+    /// <summary>
+    /// Remove an item from the collection
+    /// </summary>
+    /// <param name="item"></param>
+    public void RemoveItem( BitmapType item )
+    {
+        if ( _myItems.Remove( item ) )
         {
-            item.bCanRemove = bCanRemove;
-            myItems.Add( item );
-            if ( null != OnItemAdded )
+            if ( null != OnItemRemoved )
             {
-                OnItemAdded( this, item );
+                OnItemRemoved( this, item );                    
+            }
+        }            
+    }
+
+    /// <summary>
+    /// Accessors for lists for data-binding purposes
+    /// </summary>
+    /// <returns></returns>
+    public List<BitmapType> GetItems()
+    {
+        var items = new List<BitmapType>();
+        foreach ( var item in _myItems )
+            items.Add( item );
+        return items;
+    }
+
+    public List<string> GetItemNames()
+    {
+        var names = new List<string>();
+        foreach ( var item in _myItems )
+            names.Add( item.Name );
+        return names;
+    }
+
+    public List<string> GetFilenames()
+    {
+        var filenames = new List<string>();
+        foreach ( var item in _myItems )
+        {
+            if ( item.FileName != null )
+            {
+                filenames.Add( item.FileName );
             }
         }
+        return filenames;
+    }
 
-        /// <summary>
-        /// Create a BitmapType object from a BitmapImage using the factory function, and add it to the collection
-        /// </summary>
-        /// <param name="item"></param>
-        public BitmapType AddNewItem( BitmapImage bitmap )
+    /// <summary>
+    /// Create a BitmapType from a file.  Must have set the factory function to use.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="uri"></param>
+    /// <returns></returns>
+    public BitmapType CreateItemFromFile( string name, Uri uri )
+    {
+        var image = new BitmapImage( uri );
+        var x = AddNewItem( image );
+        x.Name = name;
+        if ( uri.IsFile )
         {
-            BitmapType item = (BitmapType)FactoryFunc( bitmap );
-            AddItem( item );
-            return item;
+            x.FileName = Uri.UnescapeDataString( uri.AbsolutePath );
         }
-
-        /// <summary>
-        /// Remove an item from the collection
-        /// </summary>
-        /// <param name="item"></param>
-        public void RemoveItem( BitmapType item )
+        else
         {
-            if ( myItems.Remove( item ) )
+            x.FileName = uri.AbsoluteUri;
+        }
+        return x;
+    }
+
+    public BitmapType CreateItemFromResource( string name, string path )
+    {
+        var uri = new Uri( new Uri( @"pack://application:,,,/MyAssembly;component" ), path );
+        var image = new BitmapImage( uri );
+        var x = AddNewItem( image );
+        x.Name = name;
+        x.FileName = uri.AbsoluteUri;
+        return x;
+    }
+
+    /// <summary>
+    /// Populate the palette from a list of filenames
+    /// </summary>
+    /// <param name="filenames"></param>
+    public void Populate( string[] filenames )
+    {
+        foreach ( var filename in filenames )
+        {
+            try
             {
-                if ( null != OnItemRemoved )
+                var uri = new Uri( filename );
+                if ( uri.IsFile )
                 {
-                    OnItemRemoved( this, item );                    
+                    var file = new FileInfo( filename );
+                    var name = Path.GetFileNameWithoutExtension( file.Name );
+                    var item = CreateItemFromFile( name, uri );
                 }
-            }            
-        }
-
-        /// <summary>
-        /// Accessors for lists for data-binding purposes
-        /// </summary>
-        /// <returns></returns>
-        public List<BitmapType> GetItems()
-        {
-            List<BitmapType> items = new List<BitmapType>();
-            foreach ( var item in myItems )
-                items.Add( item );
-            return items;
-        }
-
-        public List<string> GetItemNames()
-        {
-            List<string> names = new List<string>();
-            foreach ( var item in myItems )
-                names.Add( item.Name );
-            return names;
-        }
-
-        public List<string> GetFilenames()
-        {
-            List<string> filenames = new List<string>();
-            foreach ( var item in myItems )
-            {
-                if ( item.filename != null )
+                else
                 {
-                    filenames.Add( item.filename );
-                }
-            }
-            return filenames;
-        }
-
-        /// <summary>
-        /// Create a BitmapType from a file.  Must have set the factory function to use.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="uri"></param>
-        /// <returns></returns>
-        public BitmapType CreateItemFromFile( string name, Uri uri )
-        {
-            BitmapImage image = new BitmapImage( uri );
-            BitmapType x = AddNewItem( image );
-            x.Name = name;
-            if ( uri.IsFile )
-            {
-                x.filename = Uri.UnescapeDataString( uri.AbsolutePath );
-            }
-            else
-            {
-                x.filename = uri.AbsoluteUri;
-            }
-            return x;
-        }
-
-        public BitmapType CreateItemFromResource( string name, string path )
-        {
-            Uri uri = new Uri( new Uri( @"pack://application:,,,/MyAssembly;component" ), path );
-            BitmapImage image = new BitmapImage( uri );
-            BitmapType x = AddNewItem( image );
-            x.Name = name;
-            x.filename = uri.AbsoluteUri;
-            return x;
-        }
-
-        /// <summary>
-        /// Populate the palette from a list of filenames
-        /// </summary>
-        /// <param name="filenames"></param>
-        public void Populate( string[] filenames )
-        {
-            foreach ( string filename in filenames )
-            {
-                try
-                {
-                    Uri uri = new Uri( filename );
-                    if ( uri.IsFile )
-                    {
-                        FileInfo file = new FileInfo( filename );
-                        string name = System.IO.Path.GetFileNameWithoutExtension( file.Name );
-                        BitmapType item = CreateItemFromFile( name, uri );
-                    }
-                    else
-                    {
-                        string name = System.IO.Path.GetFileNameWithoutExtension( uri.LocalPath );
-                        BitmapType item = CreateItemFromFile( name, uri );
-                    }
-                }
-                catch ( Exception )
-                {
-                    Console.WriteLine( "Failed to load {0}", filename );
+                    var name = Path.GetFileNameWithoutExtension( uri.LocalPath );
+                    var item = CreateItemFromFile( name, uri );
                 }
             }
-        }
-
-        public void Populate( System.Collections.Specialized.StringCollection filenames )
-        {
-            string[] strings = new string[ filenames.Count ];
-            filenames.CopyTo( strings, 0 );
-            Populate( strings );
-        }
-
-        /// <summary>
-        /// Clear the collection, except for any items marked as unremovable
-        /// </summary>
-        public void Clear()
-        {
-            BitmapType[] items = myItems.ToArray();
-            foreach ( var x in items )
+            catch ( Exception )
             {
-                if ( x.bCanRemove )
-                {
-                    RemoveItem( x );
-                }
+                Console.WriteLine( "Failed to load {0}", filename );
             }
         }
+    }
+
+    public void Populate( System.Collections.Specialized.StringCollection filenames )
+    {
+        var strings = new string[ filenames.Count ];
+        filenames.CopyTo( strings, 0 );
+        Populate( strings );
+    }
+
+    /// <summary>
+    /// Clear the collection, except for any items marked as unremovable
+    /// </summary>
+    public void Clear()
+    {
+        var items = _myItems.ToArray();
+        foreach ( var x in items )
+        {
+            if ( x.CanRemove )
+            {
+                RemoveItem( x );
+            }
+        }
+    }
     
+}
+
+/// <summary>
+/// Specialised BitmapCollection (basically provides a custom factory func)
+/// </summary>
+public class StereogramCollection : BitmapCollection
+{
+    public StereogramCollection()
+        : base(new Func<BitmapSource, BitmapType>(bmp => new Stereogram(bmp)))
+    {
     }
 }

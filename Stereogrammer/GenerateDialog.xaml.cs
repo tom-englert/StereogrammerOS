@@ -4,18 +4,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-
-using Stereogrammer.Model;
+using Engine;
 
 namespace Stereogrammer
 {
@@ -30,90 +21,91 @@ namespace Stereogrammer
 
         public bool SaveStereogram = false;
 
-        public DialogGenerateStereogram( Options options, List<BitmapType> depthmaps, List<BitmapType> textures, bool SaveIsDefault )
+        public DialogGenerateStereogram(Options options, List<BitmapType> depthmaps, List<BitmapType> textures,
+            bool saveIsDefault)
         {
             InitializeComponent();
             generateOptions = options;
             this.depthmaps = depthmaps;
             this.textures = textures;
-            this.DataContext = options;
+            DataContext = options;
 
-            buttonSave.IsDefault = SaveIsDefault;
+            buttonSave.IsDefault = saveIsDefault;
             buttonOK.IsDefault = !buttonSave.IsDefault;
         }
 
-        private void GenerateDialog_Loaded( object sender, RoutedEventArgs e )
+        private void GenerateDialog_Loaded(object sender, RoutedEventArgs e)
         {
             comboDepthmap.ItemsSource = depthmaps;
-            comboDepthmap.SelectedItem = generateOptions.depthmap;
+            comboDepthmap.SelectedItem = generateOptions.DepthMap;
             comboTexture.ItemsSource = textures;
-            comboTexture.SelectedItem = generateOptions.texture;
+            comboTexture.SelectedItem = generateOptions.Texture;
         }
 
-        private void GenerateDialog_Closing( object sender, System.ComponentModel.CancelEventArgs e )
+        private void GenerateDialog_Closing(object sender, CancelEventArgs e)
         {
         }
 
-        private void buttonSave_Click( object sender, RoutedEventArgs e )
+        private void buttonSave_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = true;
-            this.SaveStereogram = true;
-            generateOptions.depthmap = (Depthmap)comboDepthmap.SelectedItem;
-            generateOptions.texture = (Texture)comboTexture.SelectedItem;
+            DialogResult = true;
+            SaveStereogram = true;
+            generateOptions.DepthMap = (DepthMap) comboDepthmap.SelectedItem;
+            generateOptions.Texture = (Texture) comboTexture.SelectedItem;
             Close();
         }
 
-        private void buttonOK_Click( object sender, RoutedEventArgs e )
+        private void buttonOK_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = true;
-            this.SaveStereogram = false;
-            generateOptions.depthmap = (Depthmap)comboDepthmap.SelectedItem;
-            generateOptions.texture = (Texture)comboTexture.SelectedItem;
+            DialogResult = true;
+            SaveStereogram = false;
+            generateOptions.DepthMap = (DepthMap) comboDepthmap.SelectedItem;
+            generateOptions.Texture = (Texture) comboTexture.SelectedItem;
             Close();
         }
 
-        private void buttonCancel_Click( object sender, RoutedEventArgs e )
+        private void buttonCancel_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
-            this.SaveStereogram = false;
+            DialogResult = false;
+            SaveStereogram = false;
             Close();
         }
 
         // Preserve aspect ratio if the option is selected
-        private void textHeight_LostFocus( object sender, RoutedEventArgs e )
+        private void textHeight_LostFocus(object sender, RoutedEventArgs e)
         {
-            if ( generateOptions.bPreserveAspectRatio )
+            if (generateOptions.PreserveAspectRatio)
             {
-                double ratio = (double)generateOptions.depthmap.PixelWidth / generateOptions.depthmap.PixelHeight;
-                int resolutionY = Convert.ToInt32( this.textHeight.Text );
-                int resolutionX = (int)( ratio * resolutionY );
+                var ratio = (double) generateOptions.DepthMap.PixelWidth / generateOptions.DepthMap.PixelHeight;
+                var resolutionY = Convert.ToInt32(textHeight.Text);
+                var resolutionX = (int) (ratio * resolutionY);
                 textWidth.Text = resolutionX.ToString();
-                generateOptions.resolutionX = resolutionX;
+                generateOptions.ResolutionX = resolutionX;
             }
         }
 
-        private void textWidth_LostFocus( object sender, RoutedEventArgs e )
+        private void textWidth_LostFocus(object sender, RoutedEventArgs e)
         {
-            if ( generateOptions.bPreserveAspectRatio )
+            if (generateOptions.PreserveAspectRatio)
             {
-                double ratio = (double)generateOptions.depthmap.PixelHeight / generateOptions.depthmap.PixelWidth;
-                int resolutionX = Convert.ToInt32( this.textWidth.Text );
-                int resolutionY = (int)( ratio * resolutionX );
+                var ratio = (double) generateOptions.DepthMap.PixelHeight / generateOptions.DepthMap.PixelWidth;
+                var resolutionX = Convert.ToInt32(textWidth.Text);
+                var resolutionY = (int) (ratio * resolutionX);
                 textHeight.Text = resolutionY.ToString();
-                generateOptions.resolutionY = resolutionY;
+                generateOptions.ResolutionY = resolutionY;
             }
-
         }
 
-        private void checkBoxPreserveAspect_Checked( object sender, RoutedEventArgs e )
+        private void checkBoxPreserveAspect_Checked(object sender, RoutedEventArgs e)
         {
-            if ( generateOptions.bPreserveAspectRatio )
+            if (generateOptions.PreserveAspectRatio)
             {
-                double ratio = (double)generateOptions.depthmap.PixelWidth / generateOptions.depthmap.PixelHeight;
-                generateOptions.resolutionX = (int)( ratio * generateOptions.resolutionY );
-                textWidth.Text = generateOptions.resolutionX.ToString();        // Shirley data-binding is supposed to make that happen automatically?
+                var ratio = (double) generateOptions.DepthMap.PixelWidth / generateOptions.DepthMap.PixelHeight;
+                generateOptions.ResolutionX = (int) (ratio * generateOptions.ResolutionY);
+                textWidth.Text =
+                    generateOptions.ResolutionX
+                        .ToString(); // Shirley data-binding is supposed to make that happen automatically?
             }
         }
-
     }
 }

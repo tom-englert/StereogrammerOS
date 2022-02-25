@@ -14,7 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-
+using Engine;
 using Stereogrammer.Model;
 
 namespace Stereogrammer
@@ -24,39 +24,39 @@ namespace Stereogrammer
     /// </summary>
     public partial class LevelAdjust : Window
     {
-        Depthmap preview = null;
+        private DepthMap _preview = null;
         public LevelAdjustments adjustments;
 
-        public LevelAdjust( Depthmap src )
+        public LevelAdjust( DepthMap src )
         {
             InitializeComponent();
-            preview = new Depthmap( src.GetToScale( (int)imagePreview.Width, (int)imagePreview.Height ) );
+            _preview = new DepthMap( src.GetToScale( (int)imagePreview.Width, (int)imagePreview.Height ) );
         }
 
         private void slider_ValueChanged( object sender, RoutedPropertyChangedEventArgs<double> e )
         {
-            if ( preview != null )
+            if ( _preview != null )
             {
                 adjustments = new LevelAdjustments( blackin.Value, whitein.Value, blackout.Value, whiteout.Value, gamma.Value, (bool)bHardBlacks.IsChecked );
-                imagePreview.Source = preview.GetLevelAdjusted( adjustments );
+                imagePreview.Source = _preview.GetLevelAdjusted( adjustments );
             }
         }
 
         private void Window_Loaded( object sender, RoutedEventArgs e )
         {
-            if ( preview != null )
+            if ( _preview != null )
             {
                 adjustments = new LevelAdjustments( blackin.Value, whitein.Value, blackout.Value, whiteout.Value, gamma.Value, (bool)bHardBlacks.IsChecked );
-                imagePreview.Source = preview.GetLevelAdjusted( adjustments );
+                imagePreview.Source = _preview.GetLevelAdjusted( adjustments );
             }
         }
 
         private void bHardBlacks_Checked( object sender, RoutedEventArgs e )
         {
-            if ( preview != null )
+            if ( _preview != null )
             {
                 adjustments = new LevelAdjustments( blackin.Value, whitein.Value, blackout.Value, whiteout.Value, gamma.Value, (bool)bHardBlacks.IsChecked );
-                imagePreview.Source = preview.GetLevelAdjusted( adjustments );
+                imagePreview.Source = _preview.GetLevelAdjusted( adjustments );
             }
         }
 

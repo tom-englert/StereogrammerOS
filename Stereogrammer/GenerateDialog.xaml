@@ -2,14 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        xmlns:local="clr-namespace:Stereogrammer"
-        xmlns:alg="clr-namespace:StereogramAlgorithm"
-        Title="Generate Stereogram" Height="480" Width="340" Name="DialogGenerate" MaxHeight="480" MaxWidth="340" WindowStartupLocation="CenterOwner" WindowStyle="ThreeDBorderWindow" VerticalAlignment="Top" SizeToContent="Height" ResizeMode="NoResize" Margin="8" Padding="8" Loaded="GenerateDialog_Loaded" DataContext="{Binding}" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:my="clr-namespace:Stereogrammer" Closing="GenerateDialog_Closing">
+        Title="Generate Stereogram" Height="480" Width="340" Name="DialogGenerate" MaxHeight="480" MaxWidth="340" WindowStartupLocation="CenterOwner" WindowStyle="ThreeDBorderWindow" VerticalAlignment="Top" SizeToContent="Height" ResizeMode="NoResize" Margin="8" Padding="8" Loaded="GenerateDialog_Loaded" DataContext="{Binding}" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:my="clr-namespace:Stereogrammer"
+        xmlns:engine="clr-namespace:Engine;assembly=Engine"
+        Closing="GenerateDialog_Closing">
     <Window.Resources>
         <ObjectDataProvider x:Key="OversampleEnum"
             MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="alg:Oversample"/>
+                <x:Type TypeName="engine:Oversample"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
     </Window.Resources>

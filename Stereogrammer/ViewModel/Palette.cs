@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
-
+using Engine;
 using Stereogrammer.Model;
 
 namespace Stereogrammer.ViewModel
@@ -32,20 +32,20 @@ namespace Stereogrammer.ViewModel
 
         public event ThumbnailSelected OnThumbnailSelected;
 
-        Thumbnail mySelectedThumbnail = null;
+        private Thumbnail _mySelectedThumbnail = null;
 
         /// <summary>
         /// Make thumbnails an observable collection, for data-binding purposes
         /// </summary>
-        ObservableCollection<Thumbnail> myThumbnails = new ObservableCollection<Thumbnail>();
+        private readonly ObservableCollection<Thumbnail> _myThumbnails = new ObservableCollection<Thumbnail>();
 
-        public ObservableCollection<Thumbnail> Thumbnails { get { return myThumbnails; } }
+        public ObservableCollection<Thumbnail> Thumbnails => _myThumbnails;
 
-        private bool bHasMultiselection = false;
+        private bool _bHasMultiselection = false;
 
         public int NumUnremovable = 0;
 
-        public string sDefaultDirectory { get; set; }
+        public string SDefaultDirectory { get; set; }
 
         /// <summary>
         /// Underlying bitmap collection
@@ -53,7 +53,7 @@ namespace Stereogrammer.ViewModel
         private BitmapCollection _bitmaps;
         public BitmapCollection Bitmaps
         {
-            get { return _bitmaps; }
+            get => _bitmaps;
             set
             {
                 _bitmaps = value;
@@ -68,22 +68,16 @@ namespace Stereogrammer.ViewModel
             Bitmaps = collection;
         }
 
-        public BitmapSource SelectedImage
-        {
-            get
-            {
-                return ( mySelectedThumbnail != null ) ? mySelectedThumbnail.ThumbnailOf.Bitmap : null;
-            }
-        }
+        public BitmapSource SelectedImage => ( _mySelectedThumbnail != null ) ? _mySelectedThumbnail.ThumbnailOf.Bitmap : null;
 
-        public int NumThumbnails { get { return myThumbnails.Count; } }
+        public int NumThumbnails => _myThumbnails.Count;
 
         /// <summary>
         /// Callback event to add thumbnail when the underlying collection adds an item
         /// </summary>
         /// <param name="collection"></param>
         /// <param name="item"></param>
-        void palette_itemAdded( BitmapCollection collection, BitmapType item )
+        private void palette_itemAdded( BitmapCollection collection, BitmapType item )
         {
             AddThumbnail( item );
         }
@@ -93,9 +87,9 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         /// <param name="collection"></param>
         /// <param name="item"></param>
-        void palette_itemRemoved( BitmapCollection collection, BitmapType item )
+        private void palette_itemRemoved( BitmapCollection collection, BitmapType item )
         {
-            Thumbnail thumb = FindThumbnail( item );
+            var thumb = FindThumbnail( item );
             RemoveThumbnail( thumb );
         }
 
@@ -103,17 +97,17 @@ namespace Stereogrammer.ViewModel
         /// Add a thumbnailable item to the palette
         /// </summary>
         /// <returns></returns>
-        public Thumbnail AddThumbnail( BitmapType item, RoutedCommand OnDoubleClick = null )
+        public Thumbnail AddThumbnail( BitmapType item, RoutedCommand onDoubleClick = null )
         {
-            if ( OnDoubleClick == null )
+            if ( onDoubleClick == null )
             {
-                OnDoubleClick = DefaultDoubleClick;
+                onDoubleClick = DefaultDoubleClick;
             }
 
-            Thumbnail thumb = new Thumbnail( item );
-            thumb.OnDoubleClick = OnDoubleClick;
+            var thumb = new Thumbnail( item );
+            thumb.OnDoubleClick = onDoubleClick;
             
-            myThumbnails.Add( thumb );
+            _myThumbnails.Add( thumb );
 
             if ( thumb.CanRemove == false )
                 NumUnremovable++;
@@ -128,23 +122,23 @@ namespace Stereogrammer.ViewModel
         /// <param name="thumb"></param>
         public void RemoveThumbnail( Thumbnail thumb )
         {
-            int index = myThumbnails.IndexOf( thumb );
+            var index = _myThumbnails.IndexOf( thumb );
 
-            myThumbnails.Remove( thumb );
+            _myThumbnails.Remove( thumb );
 
             if ( thumb.CanRemove == false )
                 NumUnremovable--;
 
-            if ( mySelectedThumbnail == thumb )
+            if ( _mySelectedThumbnail == thumb )
 	        {
-                int iNumThumbs = myThumbnails.Count;
+                var iNumThumbs = _myThumbnails.Count;
                 if ( iNumThumbs > 0 )
                 {
-                    SelectItem( myThumbnails[ Math.Min( index, iNumThumbs - 1 ) ] );
+                    SelectItem( _myThumbnails[ Math.Min( index, iNumThumbs - 1 ) ] );
                 }
                 else
                 {
-                    mySelectedThumbnail = null;
+                    _mySelectedThumbnail = null;
                 }
 	        }
         }
@@ -157,13 +151,13 @@ namespace Stereogrammer.ViewModel
             // Just build a new list and swap it out
             Bitmaps.Clear();
 
-            if ( myThumbnails.Count > 0 )
+            if ( _myThumbnails.Count > 0 )
             {
-                SelectItem( myThumbnails[ 0 ] );
+                SelectItem( _myThumbnails[ 0 ] );
             }
             else
             {
-                mySelectedThumbnail = null;
+                _mySelectedThumbnail = null;
             }
         }
 
@@ -173,7 +167,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public Thumbnail GetSelectedThumbnail()
         {
-            return mySelectedThumbnail;
+            return _mySelectedThumbnail;
         }
 
         /// <summary>
@@ -182,7 +176,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public List<Thumbnail> GetMultiselectedThumbnails()
         {
-            return myThumbnails.ToList().FindAll( x => x.MultiSelected );
+            return _myThumbnails.ToList().FindAll( x => x.MultiSelected );
         }
 
         /// <summary>
@@ -191,7 +185,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public BitmapType GetSelectedItem()
         {
-            return mySelectedThumbnail == null ? null : mySelectedThumbnail.ThumbnailOf;
+            return _mySelectedThumbnail == null ? null : _mySelectedThumbnail.ThumbnailOf;
         }
 
         /// <summary>
@@ -214,12 +208,12 @@ namespace Stereogrammer.ViewModel
             // We won't allow a NULL selection, 'cause we don't want null references being thrown around
             if ( thumb != null )
             {
-                if ( mySelectedThumbnail != null )
+                if ( _mySelectedThumbnail != null )
                 {
-                    mySelectedThumbnail.Selected = false;
+                    _mySelectedThumbnail.Selected = false;
                 }
 
-                mySelectedThumbnail = thumb;
+                _mySelectedThumbnail = thumb;
 
                 thumb.Selected = true;
 
@@ -245,14 +239,14 @@ namespace Stereogrammer.ViewModel
         /// <param name="e"></param>
         public void RemoveSelectedItems()
         {
-            if ( mySelectedThumbnail != null && mySelectedThumbnail.CanRemove )
+            if ( _mySelectedThumbnail != null && _mySelectedThumbnail.CanRemove )
             {
-                if ( mySelectedThumbnail.CanRemove )
+                if ( _mySelectedThumbnail.CanRemove )
                 {
-                    Bitmaps.RemoveItem( mySelectedThumbnail.ThumbnailOf );
+                    Bitmaps.RemoveItem( _mySelectedThumbnail.ThumbnailOf );
                 }
             }
-            if ( bHasMultiselection )
+            if ( _bHasMultiselection )
             {
                 foreach ( var thumb in GetMultiselectedThumbnails() )
                 {
@@ -271,7 +265,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public Thumbnail FindThumbnail( BitmapType item )
         {
-            foreach ( Thumbnail thumb in myThumbnails )
+            foreach ( var thumb in _myThumbnails )
             {
                 if ( thumb.ThumbnailOf == item )
                     return thumb;
@@ -287,7 +281,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public Thumbnail FindThumbnail( string name )
         {
-            foreach ( Thumbnail thumb in myThumbnails )
+            foreach ( var thumb in _myThumbnails )
             {
                 if ( thumb.Name == name )
                     return thumb;
@@ -298,9 +292,9 @@ namespace Stereogrammer.ViewModel
 
         public Thumbnail FindByFilename( string filename )
         {
-            foreach ( Thumbnail thumb in myThumbnails )
+            foreach ( var thumb in _myThumbnails )
             {
-                if ( thumb.Filename == filename )
+                if ( thumb.FileName == filename )
                     return thumb;
             }
 
@@ -328,46 +322,46 @@ namespace Stereogrammer.ViewModel
 
         public void SelectionLogic( Thumbnail thumb, bool shift, bool ctrl )
         {
-            Console.WriteLine( String.Format( "Item: {0} Shift: {1} CTRL: {2}", thumb, shift, ctrl ) );
+            Console.WriteLine( string.Format( "Item: {0} Shift: {1} CTRL: {2}", thumb, shift, ctrl ) );
 
             // Selection & multi-selection logic... surprisingly complicated, isn't it?  Think this is idiomatic usage of CTRL+SHIFT modifiers now.
             // WPF would probably do all of this for me naturally if I figured out the right way to make Palettes a custom/user control...
             if ( shift )
             {
                 // if shift key is down, we're range-selecting (deselecting?)
-                int index1 = myThumbnails.IndexOf( thumb );
-                int index2 = ( mySelectedThumbnail == null ) ? 0 : myThumbnails.IndexOf( mySelectedThumbnail );
+                var index1 = _myThumbnails.IndexOf( thumb );
+                var index2 = ( _mySelectedThumbnail == null ) ? 0 : _myThumbnails.IndexOf( _mySelectedThumbnail );
                 if ( index1 > index2 )
                 {
-                    int t = index1;
+                    var t = index1;
                     index1 = index2;
                     index2 = t;
                 }
                 if ( Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl ) )
                 {
                     // CTRL+SHIFT = additive range selection
-                    for ( int i = index1; i <= index2; i++ )
+                    for ( var i = index1; i <= index2; i++ )
                     {
-                        myThumbnails[ i ].MultiSelected = true;
+                        _myThumbnails[ i ].MultiSelected = true;
                     }
                     SelectItem( thumb );
                 }
                 else
                 {
                     // SHIFT alone = exclusive range selection
-                    for ( int i = 0; i < myThumbnails.Count; i++ )
+                    for ( var i = 0; i < _myThumbnails.Count; i++ )
                     {
-                        myThumbnails[ i ].MultiSelected = ( i >= index1 && i <= index2 );
+                        _myThumbnails[ i ].MultiSelected = ( i >= index1 && i <= index2 );
                     }
 
                     if ( index1 != index2 )
                     {
-                        bHasMultiselection = true;
+                        _bHasMultiselection = true;
                     }
                     else
                     {
                         SelectItem( thumb );
-                        bHasMultiselection = false;
+                        _bHasMultiselection = false;
                     }
                 }
             }
@@ -376,12 +370,12 @@ namespace Stereogrammer.ViewModel
                 // If CTRL is held down, we're multi-selecting
                 if ( thumb.MultiSelected == false )
                 {
-                    if ( mySelectedThumbnail != null )
+                    if ( _mySelectedThumbnail != null )
                     {
-                        mySelectedThumbnail.MultiSelected = true;
+                        _mySelectedThumbnail.MultiSelected = true;
                     }
                     thumb.MultiSelected = true;
-                    bHasMultiselection = true;
+                    _bHasMultiselection = true;
                     SelectItem( thumb );
                 }
                 else
@@ -391,12 +385,12 @@ namespace Stereogrammer.ViewModel
             }
             else
             {
-                foreach ( Thumbnail t in myThumbnails )
+                foreach ( var t in _myThumbnails )
                 {
                     if ( t.MultiSelected )
                         t.MultiSelected = false;
                 }
-                bHasMultiselection = false;
+                _bHasMultiselection = false;
                 SelectItem( thumb );
             }
 

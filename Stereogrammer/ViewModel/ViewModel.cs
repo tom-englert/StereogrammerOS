@@ -13,16 +13,65 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Diagnostics;
-
+using Engine;
 using Microsoft.Win32;
 
 using Stereogrammer.Model;
 
 namespace Stereogrammer.ViewModel
 {
-    using Algorithm = StereogramAlgorithm.Algorithm;
+    public class TextureCollection : BitmapCollection
+    {
+        public TextureCollection()
+            : base(new Func<BitmapSource, BitmapType>(bmp => new Texture(bmp)))
+        {
+        }
+    }
+    public class DepthmapCollection : BitmapCollection
+    {
+        public DepthmapCollection()
+            : base(new Func<BitmapSource, BitmapType>(bmp => new DepthMap(bmp)))
+        {
+        }
+    }
 
-    class StereogrammerViewModel
+    internal class TextureGreyDots : Texture
+    {
+        public TextureGreyDots(int resX, int resY)
+            : base(TextureType.Greydots, resX, resY)
+        {
+        }
+
+        public override BitmapSource GetThumbnail(bool bSelected)
+        {
+            if (bSelected)
+            {
+                Bitmap = GenerateRandomDots(Bitmap.PixelWidth, Bitmap.PixelHeight);
+            }
+
+            return Bitmap;
+        }
+    }
+
+    internal class TextureColourDots : Texture
+    {
+        public TextureColourDots(int resX, int resY)
+            : base(TextureType.Colourdots, resX, resY)
+        {
+        }
+
+        public override BitmapSource GetThumbnail(bool bSelected)
+        {
+            if (bSelected)
+            {
+                Bitmap = GenerateColoredDots(Bitmap.PixelWidth, Bitmap.PixelHeight);
+            }
+
+            return Bitmap;
+        }
+    }
+
+    internal class StereogrammerViewModel
     {
         public Options Options { get; set; }
 
@@ -30,9 +79,9 @@ namespace Stereogrammer.ViewModel
         public TextureCollection myTextures = new TextureCollection();
         public StereogramCollection myStereograms = new StereogramCollection();
 
-        Depthmap depthmapFlat = null;
-        Texture textureRandomDots = null;
-        Texture textureRandomColours = null;
+        private DepthMap _depthMapFlat = null;
+        private Texture _textureRandomDots = null;
+        private Texture _textureRandomColours = null;
 
         public Palette DepthmapPalette { get; set; }
         public Palette TexturePalette { get; set; }
@@ -62,27 +111,27 @@ namespace Stereogrammer.ViewModel
         /// <summary>
         /// Item set for previewing
         /// </summary>
-        private object _PreviewItem = null;
+        private object _previewItem = null;
         public object PreviewItem { 
-            get { return _PreviewItem; }
+            get => _previewItem;
             set
             {
-                if ( _PreviewItem != value )
+                if ( _previewItem != value )
                 {
-                    _PreviewItem = value;
+                    _previewItem = value;
                     if ( OnPreviewItemChanged != null )
                     {
-                        OnPreviewItemChanged( _PreviewItem );
+                        OnPreviewItemChanged( _previewItem );
                     }                
                 }
             }
         }
 
         // Would like to databind selected palette to something in the view, but a callback is more flexible
-        Palette _selectedPalette = null;
+        private Palette _selectedPalette = null;
         public Palette SelectedPalette
         {
-            get { return _selectedPalette; }
+            get => _selectedPalette;
             set { 
                 if ( _selectedPalette != value )
                 {
@@ -104,7 +153,7 @@ namespace Stereogrammer.ViewModel
             {
                 if ( TexturePalette != null && TexturePalette.GetSelectedThumbnail() != null )
                 {
-                    Thumbnail thumb = TexturePalette.GetSelectedThumbnail();
+                    var thumb = TexturePalette.GetSelectedThumbnail();
                     return (Texture)thumb.ThumbnailOf;
                 }
                 return null;
@@ -114,14 +163,14 @@ namespace Stereogrammer.ViewModel
         /// <summary>
         /// Get the item which has been selected in the Depthmap Palette
         /// </summary>
-        public Depthmap SelectedDepthmap
+        public DepthMap SelectedDepthMap
         {
             get
             {
                 if ( DepthmapPalette != null && DepthmapPalette.GetSelectedThumbnail() != null )
                 {
-                    Thumbnail thumb = DepthmapPalette.GetSelectedThumbnail();
-                    return (Depthmap)thumb.ThumbnailOf;
+                    var thumb = DepthmapPalette.GetSelectedThumbnail();
+                    return (DepthMap)thumb.ThumbnailOf;
                 }
                 return null;
             }
@@ -136,7 +185,7 @@ namespace Stereogrammer.ViewModel
             {
                 if ( StereogramPalette != null && StereogramPalette.GetSelectedThumbnail() != null )
                 {
-                    Thumbnail thumb = StereogramPalette.GetSelectedThumbnail();
+                    var thumb = StereogramPalette.GetSelectedThumbnail();
                     return (Stereogram)thumb.ThumbnailOf;
                 }
                 return null;
@@ -144,18 +193,15 @@ namespace Stereogrammer.ViewModel
         }
 
         // Logical solution to this still elusive
-        StereogramGeneratorAsync previewer = null;
-        Stereogram _PreviewStereogram = null;
+        private readonly StereogramGeneratorAsync _previewer = null;
+        private Stereogram _previewStereogram = null;
         public Stereogram PreviewStereogram
         {
-            get
-            {
-                return _PreviewStereogram;
-            }
+            get => _previewStereogram;
             private set
             {
-                _PreviewStereogram = value;
-                PreviewItem = _PreviewStereogram;
+                _previewStereogram = value;
+                PreviewItem = _previewStereogram;
             }
         }
 
@@ -177,10 +223,10 @@ namespace Stereogrammer.ViewModel
             TexturePalette = AddPalette( myTextures, Commands.CmdPreviewStereogram );
             StereogramPalette = AddPalette( myStereograms, Commands.CmdPreviewStereogram );
 
-            previewer = new StereogramGeneratorAsync( new Action<Stereogram>( stereogram => 
+            _previewer = new StereogramGeneratorAsync( new Action<Stereogram>( stereogram => 
                     {
                         if ( stereogram != null )
-                            this.PreviewStereogram = stereogram;
+                            PreviewStereogram = stereogram;
                         else
                             ErrorMessage( "Preview failed!" );
                         EndMonitoring(); 
@@ -194,7 +240,7 @@ namespace Stereogrammer.ViewModel
         /// <param name="doubleClick"></param>
         private Palette AddPalette( BitmapCollection collection, RoutedCommand doubleClick = null )
         {
-            Palette p = new Palette( collection );
+            var p = new Palette( collection );
 
             if ( doubleClick != null )
             {
@@ -234,7 +280,7 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public void GenerateStereogram( Options options, StereogramGenerated callback = null )
         {
-            StereogramGeneratorAsync generator = new StereogramGeneratorAsync( stereogram => OnStereogramGenerated( stereogram, callback ) );
+            var generator = new StereogramGeneratorAsync( stereogram => OnStereogramGenerated( stereogram, callback ) );
             generator.RequestStereogram( options );
             MonitorProgress( () => (float)generator.GetProgress() );
         }
@@ -265,24 +311,24 @@ namespace Stereogrammer.ViewModel
         /// <returns></returns>
         public StereogramGeneratorAsync RequestPreview( Options options, long millisecondDelay = 0 )
         {
-            previewer.RequestStereogram( options, millisecondDelay );
-            MonitorProgress( () => (float)previewer.GetProgress() );
-            return previewer;
+            _previewer.RequestStereogram( options, millisecondDelay );
+            MonitorProgress( () => (float)_previewer.GetProgress() );
+            return _previewer;
         }
 
         /// <summary>
         /// Update the preview pane... i.e. if the preview pane is showing the preview stereogram, regenerate it
         /// </summary>
         /// <param name="millisecondDelay"></param>
-        public void UpdatePreview( int PreviewWidth, int PreviewHeight, long millisecondDelay = 0 )
+        public void UpdatePreview( int previewWidth, int previewHeight, long millisecondDelay = 0 )
         {
             if ( PreviewItem != null && PreviewItem == PreviewStereogram && PreviewStereogram.HasOptions )
             {
                 Options previewOptions = new Options( Options );
-                previewOptions.depthmap = PreviewStereogram.options.depthmap;
-                previewOptions.texture = PreviewStereogram.options.texture;
-                previewOptions.resolutionX = PreviewWidth;
-                previewOptions.resolutionY = PreviewHeight;
+                previewOptions.DepthMap = PreviewStereogram.Options.DepthMap;
+                previewOptions.Texture = PreviewStereogram.Options.Texture;
+                previewOptions.ResolutionX = previewWidth;
+                previewOptions.ResolutionY = previewHeight;
                 RequestPreview( previewOptions, millisecondDelay );
             }
         }
@@ -339,7 +385,7 @@ namespace Stereogrammer.ViewModel
         public void SaveStereogram( Stereogram stereogram )
         {
             Debug.Assert( stereogram != null );
-            SaveBitmapToFile( stereogram, "Save Stereogram", StereogramPalette.sDefaultDirectory );
+            SaveBitmapToFile( stereogram, "Save Stereogram", StereogramPalette.SDefaultDirectory );
         }
 
         /// <summary>
@@ -348,11 +394,11 @@ namespace Stereogrammer.ViewModel
         /// <param name="stereogram"></param>
         public void RestoreStereogramSettings( Stereogram stereogram )
         {
-            if ( stereogram != null && stereogram.options != null )
+            if ( stereogram != null && stereogram.Options != null )
             {
-                DepthmapPalette.SelectItem( stereogram.options.depthmap );
-                TexturePalette.SelectItem( stereogram.options.texture );
-                Options = new Options( stereogram.options );
+                DepthmapPalette.SelectItem( stereogram.Options.DepthMap );
+                TexturePalette.SelectItem( stereogram.Options.Texture );
+                Options = new Options( stereogram.Options );
                 PreviewItem = stereogram;
             }
         }
@@ -366,7 +412,7 @@ namespace Stereogrammer.ViewModel
         /// <param name="initialDirectory"></param>
         public void SaveBitmapToFile( BitmapType bitmap, string dialogTitle, string initialDirectory )
         {
-            SaveFileDialog saveDialog = new SaveFileDialog();
+            var saveDialog = new SaveFileDialog();
             saveDialog.AddExtension = true;
             saveDialog.InitialDirectory = initialDirectory;
             saveDialog.FileName = bitmap.Name;
@@ -375,22 +421,22 @@ namespace Stereogrammer.ViewModel
             saveDialog.ValidateNames = true;
             saveDialog.Filter = "JPG file (*.jpg)|*.jpg|BMP file (*.bmp)|*.bmp|PNG file (*.png)|*.png";
 
-            bool? result = saveDialog.ShowDialog();
+            var result = saveDialog.ShowDialog();
 
             if ( result != true )
                 return;
 
-            FileType[] types = { FileType.JPG, FileType.BMP, FileType.PNG };
+            FileType[] types = { FileType.Jpg, FileType.Bmp, FileType.Png };
 
-            int type = Math.Max( 0, saveDialog.FilterIndex - 1 );
+            var type = Math.Max( 0, saveDialog.FilterIndex - 1 );
 
             if ( type >= types.Length )
             {
                 throw new ArgumentException( "Invalid file type" );
             }
 
-            FileInfo file = new FileInfo( saveDialog.FileName );
-            DirectoryInfo directory = file.Directory;
+            var file = new FileInfo( saveDialog.FileName );
+            var directory = file.Directory;
 
             if ( directory.Exists == false )
             {
@@ -405,10 +451,10 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         /// <param name="dm"></param>
         /// <returns></returns>
-        public Depthmap InvertDepthmap( Depthmap dm )
+        public DepthMap InvertDepthmap( DepthMap dm )
         {
             BitmapSource inverted = dm.GetLevelInverted();
-            Depthmap dmi = new Depthmap( inverted );
+            DepthMap dmi = new DepthMap( inverted );
             dmi.Name = dm.Name + "_inverted";
             myDepthmaps.AddItem( dmi );
             return dmi;
@@ -419,10 +465,10 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         /// <param name="dm"></param>
         /// <returns></returns>
-        public Depthmap AdjustDepthmapLevels( Depthmap dm, LevelAdjustments adjustments )
+        public DepthMap AdjustDepthmapLevels( DepthMap dm, LevelAdjustments adjustments )
         {
             BitmapSource adjusted = dm.GetLevelAdjusted( adjustments );
-            Depthmap dma = new Depthmap( adjusted );
+            DepthMap dma = new DepthMap( adjusted );
             dma.Name = dm.Name + "_adjusted";
             myDepthmaps.AddItem( dma );
             return dma;
@@ -434,17 +480,17 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         /// <param name="depthmaps"></param>
         /// <returns></returns>
-        public Depthmap MergeDepthmaps( BitmapType primary, List<BitmapType> others )
+        public DepthMap MergeDepthmaps( BitmapType primary, List<BitmapType> others )
         {
-            Depthmap dm = primary as Depthmap;
+            DepthMap dm = primary as DepthMap;
             if ( primary != null )
             {
                 foreach ( var item in others )
                 {
-                    Depthmap dm2 = item as Depthmap;
+                    DepthMap dm2 = item as DepthMap;
                     if ( item != null && item != primary )
                     {
-                        Depthmap dmm = dm.MergeWith( dm2 );
+                        DepthMap dmm = dm.MergeWith( dm2 );
                         dmm.Name = dm.Name + "+" + dm2.Name;
                         dm = dmm;                        
                     }                    
@@ -470,16 +516,16 @@ namespace Stereogrammer.ViewModel
 
         public void Populate()
         {
-            depthmapFlat = new Depthmap( 32, 32 );
-            depthmapFlat.Name = "Flat";
-            myDepthmaps.AddItem( depthmapFlat, bCanRemove: false );
+            _depthMapFlat = new DepthMap( 32, 32 );
+            _depthMapFlat.Name = "Flat";
+            myDepthmaps.AddItem( _depthMapFlat, bCanRemove: false );
 
-            textureRandomDots = new TextureGreyDots( (int)Options.separation, (int)Options.separation );
-            textureRandomDots.Name = "Random Dots";
-            myTextures.AddItem( textureRandomDots, bCanRemove: false );
-            textureRandomColours = new TextureColourDots( (int)Options.separation, (int)Options.separation );
-            textureRandomColours.Name = "Random Coloured Dots";
-            myTextures.AddItem( textureRandomColours, bCanRemove: false );
+            _textureRandomDots = new TextureGreyDots( (int)Options.Separation, (int)Options.Separation );
+            _textureRandomDots.Name = "Random Dots";
+            myTextures.AddItem( _textureRandomDots, bCanRemove: false );
+            _textureRandomColours = new TextureColourDots( (int)Options.Separation, (int)Options.Separation );
+            _textureRandomColours.Name = "Random Coloured Dots";
+            myTextures.AddItem( _textureRandomColours, bCanRemove: false );
 
             // Restore any depthmaps saved in the settings (sanity check on max count incase settings get screwed)
             if ( Properties.Settings.Default.Depthmaps != null && Properties.Settings.Default.Depthmaps.Count > 0 && Properties.Settings.Default.Depthmaps.Count < 1000 )

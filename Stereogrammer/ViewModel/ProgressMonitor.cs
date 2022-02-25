@@ -16,14 +16,14 @@ namespace Stereogrammer.ViewModel
         public delegate void OnStart();
         public delegate void OnCompletion();
 
-        UpdateProgress _updateProgress = null;
-        ReportStatus _reportStatus;
-        OnStart _onStart;
-        OnCompletion _onCompletion;
+        private UpdateProgress _updateProgress = null;
+        private readonly ReportStatus _reportStatus;
+        private readonly OnStart _onStart;
+        private readonly OnCompletion _onCompletion;
 
-        double progress = 0.0;
+        private double _progress = 0.0;
 
-        BackgroundWorker monitor;
+        private readonly BackgroundWorker _monitor;
 
         /// <summary>
         /// Create a progress monitor with delegates for reporting status and completion
@@ -36,17 +36,17 @@ namespace Stereogrammer.ViewModel
             _onStart = start;
             _onCompletion = complete;
 
-            monitor = new BackgroundWorker();
-            monitor.DoWork += new DoWorkEventHandler( monitor_DoWork );
-            monitor.RunWorkerCompleted += new RunWorkerCompletedEventHandler( monitor_Completed );
-            monitor.ProgressChanged += new ProgressChangedEventHandler( monitor_ReportProgress );
-            monitor.WorkerReportsProgress = true;
-            monitor.WorkerSupportsCancellation = true;
+            _monitor = new BackgroundWorker();
+            _monitor.DoWork += new DoWorkEventHandler( monitor_DoWork );
+            _monitor.RunWorkerCompleted += new RunWorkerCompletedEventHandler( monitor_Completed );
+            _monitor.ProgressChanged += new ProgressChangedEventHandler( monitor_ReportProgress );
+            _monitor.WorkerReportsProgress = true;
+            _monitor.WorkerSupportsCancellation = true;
         }
 
         public void Dispose()
         {
-            monitor.Dispose();
+            _monitor.Dispose();
         }
 
         /// <summary>
@@ -63,9 +63,9 @@ namespace Stereogrammer.ViewModel
                 _onStart();
             }
 
-            if ( false == monitor.IsBusy )
+            if ( false == _monitor.IsBusy )
             {
-                monitor.RunWorkerAsync();
+                _monitor.RunWorkerAsync();
             }
         }
 
@@ -74,16 +74,16 @@ namespace Stereogrammer.ViewModel
         /// </summary>
         public void EndMonitoring()
         {
-            if ( monitor.IsBusy )
+            if ( _monitor.IsBusy )
             {
-                monitor.CancelAsync();
+                _monitor.CancelAsync();
                 _updateProgress = null;
             }
         }
 
         private void monitor_DoWork( object sender, DoWorkEventArgs e )
         {
-            BackgroundWorker monitor = (BackgroundWorker)sender;
+            var monitor = (BackgroundWorker)sender;
 
             while ( !monitor.CancellationPending && _updateProgress != null )
             {
@@ -97,11 +97,11 @@ namespace Stereogrammer.ViewModel
         {
             if ( _updateProgress != null )
             {
-                progress = _updateProgress();
+                _progress = _updateProgress();
 
                 if ( _reportStatus != null )
                 {
-                    _reportStatus( progress );
+                    _reportStatus( _progress );
                 }                
             }
         }
