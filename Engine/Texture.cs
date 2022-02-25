@@ -11,17 +11,10 @@ namespace Engine;
 
 public class Texture : BitmapType
 {
-    public enum TextureType
-    {
-        Greydots,
-        Colourdots,
-        Bitmap
-    }
-
     private readonly TextureType _type;
 
     // Create a texture for writing... nah, use the subclasses or bitmap constructor please
-    protected Texture(TextureType type, int resX, int resY)
+    public Texture(TextureType type, int resX, int resY)
     {
         _type = type;
 
@@ -88,4 +81,11 @@ public class Texture : BitmapType
         wb.WritePixels(new Int32Rect(0, 0, resX, resY), pixels, bytesPerRow, 0);
         return wb;
     }
+}
+
+public enum TextureType
+{
+    Greydots,
+    Colourdots,
+    Bitmap
 }

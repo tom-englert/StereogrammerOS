@@ -13,12 +13,12 @@ public enum FileType { Jpg, Bmp, Png };
 
 public class BitmapType
 {
-    private BitmapSource _bitmap = null;
+    private BitmapSource _bitmap;
 
     public BitmapSource Bitmap
     {
         get => _bitmap;
-        protected set
+        set
         {
             _bitmap = value;
             _bitmap.Freeze();
@@ -51,9 +51,16 @@ public class BitmapType
 
     public void SaveImage(string filename, FileType type)
     {
+        using var stream = new FileStream(filename, FileMode.Create);
+
         Name = Path.GetFileNameWithoutExtension(filename);
         FileName = filename;
 
+        SaveImage(stream, type);
+    }
+
+    public void SaveImage(Stream stream, FileType type)
+    {
         BitmapEncoder encoder = type switch
         {
             FileType.Jpg => new JpegBitmapEncoder() {QualityLevel = 100},
@@ -65,9 +72,6 @@ public class BitmapType
         BitmapSource bitmap = new FormatConvertedBitmap(Bitmap, PixelFormats.Bgra32, null, 0.0f);
 
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
-
-        using var stream = new FileStream(filename, FileMode.Create);
-        
         encoder.Save(stream);
     }
 

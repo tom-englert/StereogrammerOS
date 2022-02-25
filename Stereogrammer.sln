@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stereogrammer", "Stereogram
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csproj", "{63F3D280-9354-40E7-82DA-B9974055B981}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Animations", "Animations\Animations.csproj", "{6C395A58-ACE7-4D72-A046-93C798F01161}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{63F3D280-9354-40E7-82DA-B9974055B981}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63F3D280-9354-40E7-82DA-B9974055B981}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63F3D280-9354-40E7-82DA-B9974055B981}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C395A58-ACE7-4D72-A046-93C798F01161}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C395A58-ACE7-4D72-A046-93C798F01161}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C395A58-ACE7-4D72-A046-93C798F01161}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C395A58-ACE7-4D72-A046-93C798F01161}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
