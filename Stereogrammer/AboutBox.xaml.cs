@@ -26,12 +26,12 @@ namespace Stereogrammer
     /// </summary>
     public partial class AboutBox : Window
     {
-        public AboutBox( string[] about )
+        public AboutBox(string[] about)
         {
             InitializeComponent();
 
-            version.Content = String.Format( "Version {0}", GetRunningVersion() );
-            this.about.Text = String.Join( Environment.NewLine, about );
+            version.Content = String.Format("Version {0}", GetRunningVersion());
+            this.about.Text = String.Join(Environment.NewLine, about);
 
             // Embed some hyperlinks
             Hyperlink[] links = new Hyperlink[] {
@@ -41,32 +41,25 @@ namespace Stereogrammer
             };
 
             foreach (var link in links)
-	        {
-                link.RequestNavigate += new RequestNavigateEventHandler( delegate( object sender, RequestNavigateEventArgs e )
-                {
-                    Process.Start( new ProcessStartInfo( e.Uri.AbsoluteUri ) );
-                    e.Handled = true;
-                } );
-		 
-                stackPanel1.Children.Add( new Label() { HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center, Content = link } );
-	        }
+            {
+                link.RequestNavigate += new RequestNavigateEventHandler(delegate (object sender, RequestNavigateEventArgs e)
+               {
+                   Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+                   e.Handled = true;
+               });
+
+                stackPanel1.Children.Add(new Label() { HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center, Content = link });
+            }
         }
 
         // Thanks to Ed Haber @ Stack Overflow
         private Version GetRunningVersion()
-        {            
-            try
-            {
-                return System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
-            }
-            catch
-            {
-                return Assembly.GetExecutingAssembly().GetName().Version;
-            }
+        {
+            return Assembly.GetExecutingAssembly().GetName().Version;
         }
 
 
-        private void buttonOK_Click_1( object sender, RoutedEventArgs e )
+        private void buttonOK_Click_1(object sender, RoutedEventArgs e)
         {
             Close();
         }

@@ -107,8 +107,6 @@ namespace Stereogrammer
             {
                 // Set the default directories for each resource type
                 string basepath = Environment.CurrentDirectory;
-                basepath = basepath.Replace( "\\bin\\Debug", "" );
-                basepath = basepath.Replace( "\\bin\\Release", "" );
 
                 // Check for the existence of the license file
                 FileInfo licensefile = new FileInfo( System.IO.Path.Combine( basepath, "license.txt" ) );
@@ -120,8 +118,8 @@ namespace Stereogrammer
                     // Pop up the about box on first run... clicking OK constitutes acceptance
                     if ( Properties.Settings.Default.LicenseAccepted == false )
                     {
-                        AboutBox box = new AboutBox( license );
-                        box.ShowDialog();
+                        //AboutBox box = new AboutBox( license );
+                        //box.ShowDialog();
                         Properties.Settings.Default.LicenseAccepted = true;
                     }
                 }
