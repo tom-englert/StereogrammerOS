@@ -2,8 +2,8 @@
 using SixLabors.ImageSharp.PixelFormats;
 using Color = SixLabors.ImageSharp.Color;
 
-const int width = 1600;
-const int height = 1200;
+const int width = 1920;
+const int height = 1080;
 
 var options = new Options
 {
