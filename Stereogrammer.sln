@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Animations", "Animations\Animations.csproj", "{6C395A58-ACE7-4D72-A046-93C798F01161}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Engine.ImageSharp", "Engine.ImageSharp\Engine.ImageSharp.csproj", "{0137C52E-C657-466F-81FC-F7C310DE340F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{6C395A58-ACE7-4D72-A046-93C798F01161}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C395A58-ACE7-4D72-A046-93C798F01161}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C395A58-ACE7-4D72-A046-93C798F01161}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0137C52E-C657-466F-81FC-F7C310DE340F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0137C52E-C657-466F-81FC-F7C310DE340F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0137C52E-C657-466F-81FC-F7C310DE340F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0137C52E-C657-466F-81FC-F7C310DE340F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
