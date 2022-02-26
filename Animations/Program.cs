@@ -2,15 +2,15 @@
 using SixLabors.ImageSharp.PixelFormats;
 using Color = SixLabors.ImageSharp.Color;
 
-//const int width = 1600;
-//const int height = 1200;
-const int width = 800;
-const int height = 600;
+const int width = 1600;
+const int height = 1200;
 
 var options = new Options
 {
     ResolutionX = width,
     ResolutionY = height,
+    Separation = 128,
+    FieldDepth = .5
 };
 
 using Image<Rgba32> gif = new(width, height, Color.Blue);
@@ -27,7 +27,8 @@ for (var alpha = 0.0; alpha < 2 * Math.PI; alpha += Math.PI / 10)
 
     image.Frames.RootFrame.Metadata.GetGifMetadata().FrameDelay = 5;
 
-    // image.SaveAsPng(@"c:\temp\test.png");
+    //image.SaveAsPng(@"c:\temp\test.png");
+    //return;
 
     gif.Frames.AddFrame(image.Frames.RootFrame);
 }
@@ -56,6 +57,8 @@ static Image GenerateDepthMap(int resX, int resY, double alpha)
 
     var factor = resX / 20.0;
 
+    var maxDist = Math.Sqrt(centerX * centerX + centerY * centerY);
+
     pixels.ProcessPixelRows(accessor =>
     {
         for (var y = 0; y < resY; y++)
@@ -65,7 +68,7 @@ static Image GenerateDepthMap(int resX, int resY, double alpha)
             for (var x = 0; x < resX; x++)
             {
                 var dist = Math.Sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
-                var z = (byte)(128 * (Math.Sin(dist / factor + alpha) + 1.0));
+                var z = (byte)(128 * (Math.Sin(dist / factor + alpha) * (1.0 - dist/maxDist) + 1.0));
 
                 row[x] = new A8(z);
             }

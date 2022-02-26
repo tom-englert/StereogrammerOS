@@ -77,20 +77,8 @@ public abstract class StereogramGenerator
     private Image<Rgb24> _texturePixels = null!;
     private Image<A8> _depthBytes = null!;
 
-    // Temp hack for progress report & abort
-    public int GeneratedLines { get; private set; }
-    public int NumLines => rows;
-    public bool abort = false;
-    public long Milliseconds = 0;
-
-    /// <summary>
-    /// Each algorithm operates on a line at a time, so subclasses must implement
-    /// the DoLine function with algorithm appropriate functionality
-    /// </summary>
-    /// <param name="y"></param>
     protected abstract void DoLine(int y);
 
-    /// Let's see how well C# optimises these... would hope they get inlined at least
     protected byte GetDepth(int x, int y)
     {
         return _depthBytes[x / _depthScale, y].PackedValue;
@@ -144,9 +132,6 @@ public abstract class StereogramGenerator
         var textureWidth = (int)separation;
         var textureHeight = (int)((separation * texture.Height) / texture.Width);
 
-        var timer = new System.Diagnostics.Stopwatch();
-        timer.Start();
-
         _pixels = new Image<Rgb24>(lineWidth, rows);
 
         _texturePixels = texture
@@ -157,33 +142,19 @@ public abstract class StereogramGenerator
             .CloneAs<A8>()
             .Clone(op => op.Resize(_depthWidth, resolutionY));
 
-        GeneratedLines = 0;
-
-        // Prime candidate for Parallel.For... yes, about doubles the speed of generation on my Quad-Core
         if (System.Diagnostics.Debugger.IsAttached)   // Don't run parallel when debugging
         {
             for (var y = 0; y < rows; y++)
             {
                 DoLine(y);
-                if (y > GeneratedLines)
-                {
-                    GeneratedLines = y;
-                }
             }
         }
         else
         {
             Parallel.For(0, rows, y =>
-           {
-               if (false == abort)
-               {
-                   DoLine(y);
-               }
-               if (y > GeneratedLines)
-               {
-                   GeneratedLines = y;
-               }
-           });
+            {
+                DoLine(y);
+            });
         }
 
         return _pixels;
@@ -226,7 +197,7 @@ internal class StereogramGeneratorHoroptic : StereogramGenerator
 
         for (var i = 0; i < lineWidth; i++)
         {
-            constraints[i] = i;
+            constraints[i] = -1;
             depthLine[i] = GetDepthFloat(i, y);
         }
 
@@ -276,7 +247,7 @@ internal class StereogramGeneratorHoroptic : StereogramGenerator
 
                     // Find an unconstrained pixel and constrain ourselves to it
                     // Uh-oh, what happens if they become constrained to each other?  Constrainee is flagged as unconstrained, I suppose
-                    while (constraints[constrainer] != constrainer)
+                    while (constraints[constrainer] != -1)
                         constrainer = constraints[constrainer];
 
                     constraints[constrainee] = constrainer;
@@ -292,13 +263,25 @@ internal class StereogramGeneratorHoroptic : StereogramGenerator
             }
         }
 
+        // fix dropouts due to rounding
+        for (var i = 1; i < lineWidth - 1; i++)
+        {
+            if (constraints[i] == -1)
+            {
+                if ((constraints[i-1] != -1) && (constraints[i + 1] != -1))
+                {
+                    constraints[i] = constraints[i - 1];
+                }
+            }
+        }
+
         // Now actually set the pixels
         for (var i = 0; i < lineWidth; i++)
         {
             var pix = i;
 
             // Find an unconstrained pixel
-            while (constraints[pix] != pix)
+            while (constraints[pix] != -1)
                 pix = constraints[pix];
 
             // And get the RGBs from the tiled texture at that point
