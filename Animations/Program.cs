@@ -37,7 +37,17 @@ for (var alpha = 0.0; alpha < 2 * Math.PI; alpha += Math.PI / 10)
 
 gif.Frames.RemoveFrame(0);
 gif.Metadata.GetGifMetadata().RepeatCount = 0;
-gif.SaveAsGif(@"c:\temp\output.gif");
+
+var folder = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+
+while (!folder.EnumerateDirectories("doc", SearchOption.TopDirectoryOnly).Any())
+{
+    folder = folder.Parent ?? throw new InvalidOperationException("Target folder not found!");
+}
+
+var fileName = Path.Combine(folder.FullName, "doc", "SineWave.gif");
+
+gif.SaveAsGif(fileName);
 
 
 static DepthMap GenerateDepthMap(int resX, int resY, double alpha)
